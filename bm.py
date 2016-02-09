@@ -72,7 +72,7 @@ def main(args):
     df_prime = pd.DataFrame(data=None, columns=df.columns, index=df.index)\
             .dropna()
     done = False
-    while not done or len(df) == 0:
+    while not done or len(df) > 0:
 
         # pick random row
         row = df.ix[random.sample(df.index, 1)]
