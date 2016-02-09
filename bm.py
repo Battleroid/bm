@@ -93,6 +93,7 @@ def main(args):
     # being process of random selection
     df_prime = pd.DataFrame(data=None, columns=df.columns, index=df.index)\
             .dropna()
+    pool = list(df.index.values)
     tried_but_kept = set()
     bad_eggs = set()
     done = False
@@ -103,9 +104,9 @@ def main(args):
             break
 
         # pick random row
-        row = df.ix[random.sample(df.index, 1)]
-        while row.index[0] in tried_but_kept:
-            row = df.ix[random.sample(df.index, 1)]
+        row_idx = random.sample(pool, 1)
+        pool.remove(row_idx)
+        row = df.ix[row_idx]
 
         if verbose:
             print 'Sampled row ({}):'.format(row.Ri.values[0])
