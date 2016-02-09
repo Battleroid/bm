@@ -5,6 +5,7 @@ Usage:
 Options:
     -h --help  Show this screen.
     -v --verbose  Turn on verbose messages.
+    --review  Show overview of D and D'.
 """
 
 import random
@@ -63,15 +64,21 @@ def main(args):
     df = pd.read_csv(args['<input>']) 
     df_p = pd.DataFrame(data=None, columns=df.columns)
     verbose = args['--verbose']
+    review = args['--review']
 
     # setup pairs
     locii_cols = df.filter(like='Locus').columns
-    nr_cols = df.filter(like='NR').columns
+    nr_cols = df.filter(regex='[nN][rR]').columns
     lnr_pairs = zip(locii_cols, nr_cols)
+
+    if verbose:
+        print 'Locus Columns:', locii_cols
+        print 'NR Columns:', nr_cols
 
     # calculate baseline He
     baseline_he = sum([he_pair(df, a, b) for 
         a, b in lnr_pairs]) / len(lnr_pairs)
+    initial_he = baseline_he
 
     # generate master lookup tables
     lookups = []
@@ -79,7 +86,6 @@ def main(args):
         lookups.append(lookup_table(df, locus, nr))
 
     if verbose:
-        print 'Baseline He is:', baseline_he
         for i, table in enumerate(lookups):
             print '{}, {} Table:'.format(lnr_pairs[i][0], lnr_pairs[i][1])
             print table.to_string(index=False)
@@ -142,11 +148,14 @@ def main(args):
                 print showoff.to_string(index=False)
             raw_input('>> Press any key to continue next iteration <<')
 
-    print 'Final He:', baseline_he
-
-    if verbose:
-        print 'D Prime:'
+    if review or verbose:
+        print '\nD Final ({}):'.format(len(df))
+        print df.to_string(index=False)
+        print '\nD Prime ({}):'.format(len(df_prime))
         print df_prime.to_string(index=False)
+
+    print '\nInitial He:', initial_he
+    print 'Final He:', baseline_he
 
 
 if __name__ == '__main__':
