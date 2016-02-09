@@ -8,5 +8,5 @@ When this is completed I should be able to provide the script (or at least this 
 
 ### todo
 
-- [ ] clarification on whether I should be using freq/2*len or freq^2 for lookup table He calculation, believe it's the former
-- [ ] when a record doesn't improve anything, what do I do with it? do I mark it as 'okay' and just not use it again or what?
+- [x] clarification on whether I should be using freq/2*len or freq^2 for lookup table He calculation, believe it's the former
+- [x] when a record doesn't improve anything, what do I do with it? do I mark it as 'okay' and just not use it again or what?

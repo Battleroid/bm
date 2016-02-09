@@ -94,7 +94,7 @@ def main(args):
     df_prime = pd.DataFrame(data=None, columns=df.columns, index=df.index)\
             .dropna()
     pool = list(df.index.values)
-    tried_but_kept = set()
+    tried_but_kept = set() # TODO: is tried necessary now that we have a pool?
     bad_eggs = set()
     done = False
     while not done:
@@ -133,7 +133,6 @@ def main(args):
             baseline_he = tentative_he
         else:
             # record does not improve He or is equal, keep it
-            # TODO: is this correct? will we never come back to this record?
             tried_but_kept.add(row.index[0])
 
         if verbose:
