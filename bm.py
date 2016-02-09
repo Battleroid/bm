@@ -8,10 +8,20 @@ Options:
 
 from docopt import docopt
 import pandas as pd
+import numpy as np
 
 
 def lookup_table(df, a, b):
-    raise NotImplementedError
+    lookup = pd.concat([df[a], df[b]]) \
+            .value_counts()\
+            .reset_index()
+    lookup.columns = ['value', 'freq']
+    lookup.sort_values(['value'], inplace=True)
+    lookup.index = lookup.value
+    lookup = lookup.reindex(np.arange(lookup.value.min(), 
+        lookup.value.max() + 1), fill_value=0)
+    lookup.index.name = 'idx'
+    return lookup
 
 
 def he_pair(df, a, b):
@@ -32,9 +42,13 @@ def main(args):
     lnr_pairs = zip(locii_cols, nr_cols)
 
     # calculate baseline He
-    baseline_he = sum([he_pair(df, a, b) for a, b in lnr_pairs]) / len(lnr_pairs)
+    baseline_he = sum([he_pair(df, a, b) for 
+        a, b in lnr_pairs]) / len(lnr_pairs)
 
-    # master lookup tables
+    # generate master lookup tables
+    lookups = []
+    for locus, nr in lnr_pairs:
+        lookups.append(lookup_table(df, locus, nr))
 
 
 if __name__ == '__main__':
