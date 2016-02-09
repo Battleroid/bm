@@ -5,6 +5,7 @@ Usage:
 Options:
     -h --help  Show this screen.
     -v --verbose  Turn on verbose messages.
+    -s  Save D and Dp.
     --review  Show overview of D and D'.
 """
 
@@ -52,6 +53,12 @@ def he_lookup(tbl):
     return 1 - he
 
 
+def he_gen(tbl, pairs):
+    he = sum([he_pair(tbl, a, b) for
+        a, b in pairs]) / len(pairs)
+    return he
+
+
 def he_pair(df, a, b):
     combined = pd.concat([df[a], df[b]])
     freqs = [pow(float(x) / len(combined), 2)
@@ -70,6 +77,11 @@ def main(args):
     locii_cols = df.filter(like='Locus').columns
     nr_cols = df.filter(regex='[nN][rR]').columns
     lnr_pairs = zip(locii_cols, nr_cols)
+    for a, b in lnr_pairs:
+        if df[a].dtype != np.int64:
+            df[a] = df[a].astype(np.int64)
+        if df[b].dtype != np.int64:
+            df[b] = df[a].astype(np.int64)
 
     if verbose:
         print 'Locus Columns:', locii_cols
@@ -155,7 +167,19 @@ def main(args):
         print df_prime.to_string(index=False)
 
     print '\nInitial He:', initial_he
-    print 'Final He:', baseline_he
+    print 'D Final He:', baseline_he
+    print 'Dp Final He:', he_gen(df_prime, lnr_pairs)
+
+    if args['-s']:
+        filename = args['<input>'].split('.')[:-1]
+        d_fn = ''.join(filename) + '_d.csv'
+        dp_fn = ''.join(filename) + '_p.csv'
+        if len(df) > 0:
+            print 'D Filename:', d_fn
+            df.to_csv(d_fn, index=False)
+        if len(df_prime) > 0:
+            print 'Dp Filename:', dp_fn
+            df_prime.to_csv(dp_fn, index=False)
 
 
 if __name__ == '__main__':
