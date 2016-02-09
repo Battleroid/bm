@@ -4,6 +4,7 @@ Usage:
 
 Options:
     -h --help  Show this screen.
+    -v --verbose  Turn on verbose messages.
 """
 
 import random
@@ -34,6 +35,15 @@ def lookup_new_he(tbl, kill):
     return tmp, he
 
 
+# is this used for the lookup tables or not?
+# when used it seems to return the same few values repeatedly?
+def he_lookup_alt(tbl):
+    he = tbl.freq.divide(tbl.freq.sum())\
+            .apply(lambda x: x / (2 * len(tbl.freq)))\
+            .sum()
+    return 1 - he
+
+
 def he_lookup(tbl):
     he = tbl.freq.divide(tbl.freq.sum())\
             .apply(lambda x: pow(x, 2))\
@@ -52,6 +62,7 @@ def main(args):
     # load
     df = pd.read_csv(args['<input>']) 
     df_p = pd.DataFrame(data=None, columns=df.columns)
+    verbose = args['--verbose']
 
     # setup pairs
     locii_cols = df.filter(like='Locus').columns
@@ -61,23 +72,40 @@ def main(args):
     # calculate baseline He
     baseline_he = sum([he_pair(df, a, b) for 
         a, b in lnr_pairs]) / len(lnr_pairs)
-    print 'Baseline He:', baseline_he
 
     # generate master lookup tables
     lookups = []
     for locus, nr in lnr_pairs:
         lookups.append(lookup_table(df, locus, nr))
 
+    if verbose:
+        print 'Baseline He is:', baseline_he
+        for i, table in enumerate(lookups):
+            print '{}, {} Table:'.format(lnr_pairs[i][0], lnr_pairs[i][1])
+            print table.to_string(index=False)
+
     # being process of random selection
     df_prime = pd.DataFrame(data=None, columns=df.columns, index=df.index)\
             .dropna()
+    tried_but_kept = set()
+    bad_eggs = set()
     done = False
-    while not done or len(df) > 0:
+    while not done:
+        # dataset and tried have same amount, we've tried all possible records
+        if len(df) == len(tried_but_kept) or len(df) == 0:
+            done = True
+            break
 
         # pick random row
         row = df.ix[random.sample(df.index, 1)]
+        while row.index[0] in tried_but_kept:
+            row = df.ix[random.sample(df.index, 1)]
 
-        # calculate temporary He for comparison
+        if verbose:
+            print 'Sampled row ({}):'.format(row.Ri.values[0])
+            print row.to_string(index=False)
+
+        # calculate temporary He and lookup table for comparison
         tentative_he = 0
         tmp_lookups = []
         for i, lk in enumerate(lookups):
@@ -87,9 +115,38 @@ def main(args):
             tmp_lk, tmp_he = lookup_new_he(lk, kill)
             tmp_lookups.append(tmp_lk)
             tentative_he += tmp_he
-        tentative_he = tentative_he / float(len(lookups))
+        tentative_he /= float(len(lookups))
 
-        raw_input('key to continue')
+        if tentative_he > baseline_he:
+            # record is bad, drop it to D'
+            df.drop(row.index, inplace=True)
+            df_prime = df_prime.append(row)
+            bad_eggs.add(row.index[0])
+            lookups = tmp_lookups
+            baseline_he = tentative_he
+        else:
+            # record does not improve He or is equal, keep it
+            # TODO: is this correct? will we never come back to this record?
+            tried_but_kept.add(row.index[0])
+
+        if verbose:
+            print 'Tentative He:', tentative_he
+            print 'Improved over {}?: {}'.format(\
+                    baseline_he, 'Yes' if tentative_he > baseline_he else 'No')
+            print '--'
+            print 'Temporary Lookup Tables:'
+            for i, table in enumerate(tmp_lookups):
+                showoff = table.copy()
+                showoff['prob'] = showoff.freq.divide(showoff.freq.sum())
+                print lnr_pairs[i][0], lnr_pairs[i][1], 'Table:'
+                print showoff.to_string(index=False)
+            raw_input('>> Press any key to continue next iteration <<')
+
+    print 'Final He:', baseline_he
+
+    if verbose:
+        print 'D Prime:'
+        print df_prime.to_string(index=False)
 
 
 if __name__ == '__main__':
