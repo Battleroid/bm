@@ -202,6 +202,7 @@ def main(args, initial=False):
             branches.append(da)
 
         # add child B (bad)
+        # TODO: should I add a catch for baseline_he != prime_he too?
         if len(df_prime) > 0 and initial_he != prime_he:
             db = Node(filename + '_p')
             db.he = prime_he
