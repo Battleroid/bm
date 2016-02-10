@@ -1,5 +1,6 @@
-# adapted from: 
+# adapted from:
 # http://www.quesucede.com/page/show/id/python-3-tree-implementation#node-class
+
 
 class Node(object):
     def __init__(self, name):
@@ -35,6 +36,7 @@ class Node(object):
     def add_child(self, name):
         self.__children.append(name)
 
+
 class Tree(object):
     def __init__(self):
         self.__nodes = dict()
@@ -58,6 +60,12 @@ class Tree(object):
 
         return node
 
+    def add_raw(self, node, parent):
+        self[node.name] = node
+        self[parent].add_child(node.name)
+
+        return node
+
     def display(self, name, depth=0):
         children = self[name].children
         print '-' * depth + '>', name, '(He: {:.5f}, Filename: {})'.format(self[name].he, self[name].filename)
@@ -71,8 +79,7 @@ class Tree(object):
 
         while queue:
             yield queue[0]
-            queue = self[queue[0]].children + queue[1:] # DFS
-
+            queue = self[queue[0]].children + queue[1:]  # DFS
 
     def __getitem__(self, key):
         return self.__nodes[key]
