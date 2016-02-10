@@ -3,4 +3,4 @@ note
 casey.csv
 *.python-version
 *.swp
-
+*.pyc
