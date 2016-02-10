@@ -6,6 +6,7 @@ Options:
     -h --help  Show this screen.
     -v --verbose  Turn on verbose messages.
     -s  Save D and Dp.
+    -t --tree  Create tree structure from groups.
     --review  Show overview of D and D'.
 """
 
@@ -66,7 +67,7 @@ def he_pair(df, a, b):
     return 1 - sum(freqs)
 
 
-def main(args):
+def main(args, initial=False):
     # load
     df = pd.read_csv(args['<input>']) 
     df_p = pd.DataFrame(data=None, columns=df.columns)
@@ -166,11 +167,12 @@ def main(args):
         print '\nD Prime ({}):'.format(len(df_prime))
         print df_prime.to_string(index=False)
 
-    print '\nInitial He:', initial_he
-    print 'D Final He:', baseline_he
-    print 'Dp Final He:', he_gen(df_prime, lnr_pairs)
+    if not args['--tree']:
+        print '\nInitial He:', initial_he
+        print 'D Final He:', baseline_he
+        print 'Dp Final He:', he_gen(df_prime, lnr_pairs)
 
-    if args['-s']:
+    if args['-s'] and not args['--tree']:
         filename = args['<input>'].split('.')[:-1]
         d_fn = ''.join(filename) + '_d.csv'
         dp_fn = ''.join(filename) + '_p.csv'
@@ -181,7 +183,28 @@ def main(args):
             print 'Dp Filename:', dp_fn
             df_prime.to_csv(dp_fn, index=False)
 
+    if args['--tree']:
+        he = baseline_he
+        filename = ''.join(args['<input>'].split('.')[:-1])
+        if initial:
+            return initial_he, filename
+
+
+def tree(args):
+    from tree import Node, Tree
+    tree = Tree()
+
+    # add our root information first
+    tree.add_node("Root")
+    tree["Root"].he, tree["Root"].filename = main(args, True)
+
+    # test
+    tree.display("Root")
+
 
 if __name__ == '__main__':
     args = docopt(__doc__)
-    main(args)
+    if args['--tree']:
+        tree(args)
+    else:
+        main(args)
