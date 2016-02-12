@@ -5,10 +5,10 @@ Usage:
 Options:
     -h --help  Show this screen.
     -v --verbose  Turn on verbose messages.
-    -s  Save D and Dp.
-    -t --tree  Create tree structure from groups.
+    -s --save  Save D and Dp.
     --review  Show overview of D and D'.
 """
+
 
 import random
 from docopt import docopt
@@ -169,12 +169,11 @@ def main(args, initial=False):
 
     prime_he = he_gen(df_prime, lnr_pairs)
 
-    if not args['--tree']:
-        print '\nInitial He:', initial_he
-        print 'D Final He:', baseline_he
-        print 'Dp Final He:', prime_he
+    print '\nInitial He:', initial_he
+    print 'D Final He:', baseline_he
+    print 'Dp Final He:', prime_he
 
-    if args['-s'] and not args['--tree']:
+    if args['--save']:
         filename = args['<input>'].split('.')[:-1]
         d_fn = ''.join(filename) + '_d.csv'
         dp_fn = ''.join(filename) + '_p.csv'
@@ -185,52 +184,7 @@ def main(args, initial=False):
             print 'Dp Filename:', dp_fn
             df_prime.to_csv(dp_fn, index=False)
 
-    if args['--tree']:
-        from tree import Node
-        he = baseline_he
-        filename = ''.join(args['<input>'].split('.')[:-1])
-        branches = []
-
-        # first iteration, e.g. 'root' of tree
-        if initial:
-            he = initial_he
-
-        # add child A (good)
-        if len(df) > 0 and initial_he != baseline_he:
-            da = Node(filename + '_d')
-            da.he = baseline_he
-            branches.append(da)
-
-        # add child B (bad)
-        # TODO: should I add a catch for baseline_he != prime_he too?
-        if len(df_prime) > 0 and initial_he != prime_he:
-            db = Node(filename + '_p')
-            db.he = prime_he
-            branches.append(db)
-
-        return he, filename, branches
-
-
-def tree(args):
-    from tree import Node, Tree
-    tree = Tree()
-    branches = []
-
-    # add our root information first
-    tree.add_node("Root")
-    tree["Root"].he, tree["Root"].filename, branches = main(args, True)
-
-    # add first children
-    if branches:
-        for b in branches:
-            tree.add_raw(b, "Root")
-
-    tree.display("Root")
-
 
 if __name__ == '__main__':
     args = docopt(__doc__)
-    if args['--tree']:
-        tree(args)
-    else:
-        main(args)
+    main(args)
